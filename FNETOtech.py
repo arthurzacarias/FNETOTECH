@@ -48,10 +48,9 @@ pesquisar = wait.until(EC.presence_of_element_located((By.XPATH, "//button[conta
 driver.execute_script("arguments[0].click();", pesquisar)
 
 # Aguarda o carregamento da pesquisa
-time.sleep(5)
+time.sleep(3)
 
-nomes_links = driver.find_elements(By.XPATH, "//a[@class='af-link']")
-
+nomes_links = driver.find_elements(By.XPATH, "//table[contains(@class, 'af-table')]//a[@class='af-link']")
 # Loop para abrir cada link em uma nova aba
 for link in nomes_links:
     nome = link.text
@@ -61,9 +60,32 @@ for link in nomes_links:
     driver.execute_script("window.open(arguments[0]);", motorista)
     driver.switch_to.window(driver.window_handles[1])
 
-    time.sleep(3)  # Aguarda a aba carregar
+    time.sleep(5)  # Aguarda a aba carregar
 
-    # Aqui você pode fazer scraping do conteúdo da aba, se necessário
+    # Aguarda o carregamento da div onbording
+    botao_onboarding = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.af-expander__heading")))
+
+    # Clica via JavaScript
+    driver.execute_script("arguments[0].click();", botao_onboarding)
+
+    # Faz a verificação da carteira de motorista
+    carteira_motorista = driver.find_element(By.CLASS_NAME, "onboarding-task-header")
+
+    # Busca a tag <i> dentro da div
+    icon = carteira_motorista.find_element(By.TAG_NAME, "i")
+
+    # Verifica as classes da tag <i>
+    classes = icon.get_attribute("class")
+
+    if "fa-minus" in classes:
+        print("certo")  
+    elif "fa-check" in classes:
+        print("errado")
+    else:
+        print("classe não reconhecida")
+
+    # Espera para visualização do clique
+    time.sleep(2)
 
     driver.close()  # Fecha a aba atual
     driver.switch_to.window(driver.window_handles[0])  # Retorna para a aba principal
