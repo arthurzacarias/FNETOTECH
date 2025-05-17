@@ -12,6 +12,12 @@ from openpyxl import Workbook, load_workbook
 from datetime import datetime
 from selenium.common.exceptions import NoSuchElementException
 
+# Caminho para o pyinstaller
+caminho_base = os.path.dirname(os.path.abspath(__file__))
+driver_path = os.path.join(caminho_base, 'chromedriver.exe')
+service = Service(driver_path)
+driver = webdriver.Chrome(service=service)
+
 # Montar nome do arquivo Excel
 agora = datetime.now()
 data_hora_formatada = agora.strftime("%d-%m %Hh%M")
