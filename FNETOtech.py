@@ -21,18 +21,17 @@ driver = webdriver.Chrome(service=service)
 # Montar nome do arquivo Excel
 agora = datetime.now()
 data_hora_formatada = agora.strftime("%d-%m %Hh%M")
-arquivo_excel = f"Verificação cadastro motoristas {data_hora_formatada}.xlsx"
+arquivo_excel = f"Validação Cadastro {data_hora_formatada}.xlsx"
 
 # Criar novo arquivo Excel com cabeçalho
 wb = Workbook()
 ws = wb.active
-ws.title = "Status cadastro de motoristas"
+ws.title = "Status Drivers"
 ws['A1'] = "Nome"
 ws['B1'] = "Status"
 wb.save(arquivo_excel)
 
 # Configurações do Chrome
-
 # Caminho para o diretório de perfil do Chrome
 userdir = 'c:\\chromewithlogin'
 
@@ -52,15 +51,25 @@ driver.get(url)
 # Aguarda o carregamento da página
 wait = WebDriverWait(driver, 10)
 
-# Clica na div que abre o dropdown
-dropdown = wait.until(EC.element_to_be_clickable((By.CLASS_NAME, "af-select__container__label")))
-dropdown.click()
+# Clica na div que abre o dropdown para integração
+status_container = wait.until(EC.element_to_be_clickable((By.XPATH,"//label[text()='Status']/following-sibling::div[contains(@class, 'af-select__container')]")))
+status_container.click()
 
 # Aguarda o item "Integração" estar presente no DOM
 integracao = wait.until(EC.presence_of_element_located((By.XPATH, "//li[contains(@class, 'af-option') and normalize-space()='Integração']")))
 
 # Usa JavaScript para forçar o clique
 driver.execute_script("arguments[0].click();", integracao)
+
+# Clica na div que abre o dropdown para driver
+position_container = wait.until(EC.element_to_be_clickable((By.XPATH,"//label[text()='Position']/following-sibling::div[contains(@class, 'af-select__container')]")))
+position_container.click()
+
+# Aguarda o item "Integração" estar presente no DOM
+driver_motorista = wait.until(EC.presence_of_element_located((By.XPATH, "//li[contains(@class, 'af-option') and normalize-space()='Driver']")))
+
+# Usa JavaScript para forçar o clique
+driver.execute_script("arguments[0].click();", driver_motorista)
 
 # Aguarda o carregamento da tabela
 pesquisar = wait.until(EC.presence_of_element_located((By.XPATH, "//button[contains(@class, 'af-button primary  af-search__search-button desktop') and normalize-space()='Pesquisar']"))) 
@@ -111,25 +120,16 @@ for link in nomes_links:
     if "not-started" in classes:
         status = "Visualização dos vídeos de integração pendente"
 
-
-    try:
-        # Verifica se o elemento "Exame toxicológico" existe
-        elemento = driver.find_element(By.XPATH, "//h3[contains(text(), 'Exame toxicológico')]")
-        
-        # Se chegou aqui, o elemento existe, então segue com a lógica
-        captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
-        elemento_pai = elemento.find_element(By.XPATH, "./ancestor::div[contains(@class, 'onboarding-task-header')]")
-        classes = elemento_pai.get_attribute("class")
-        
-        # If para verificações
-        if "not-started" in classes:
-            status = "Exame toxicológico pendente"
-        elif "error" in classes:
-            status = "Exame toxicológico reprovado"
-
-    except NoSuchElementException:
-        # Elemento não existe, então ignora e segue em frente
-        pass
+    # Verifica se o fez o exame toxicológico
+    captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
+    elemento = driver.find_element(By.XPATH, "//h3[contains(text(), 'Exame toxicológico')]")
+    elemento_pai = elemento.find_element(By.XPATH, "./ancestor::div[contains(@class, 'onboarding-task-header')]")
+    classes = elemento_pai.get_attribute("class")
+    # If para verificações
+    if "not-started" in classes:
+        status = "Exame toxicológico pendente"
+    elif "error" in classes:
+        status = "Exame toxicológico reprovado"
 
     # Verifica o status da verificação de antecedentes
     captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
@@ -190,5 +190,3 @@ for link in nomes_links:
 
     driver.close()  # Fecha a aba atual
     driver.switch_to.window(driver.window_handles[0])  # Retorna para a aba principal
-
-

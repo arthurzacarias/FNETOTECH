@@ -1,1 +1,1 @@
-python -m PyInstaller --onefile --windowed --icon=app.ico cadastro_login_senha.py
+python -m PyInstaller --onefile --windowed --icon=app.ico FNETOtech.py
