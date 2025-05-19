@@ -142,17 +142,6 @@ for link in nomes_links:
     elif "error" in classes:
         status = "Verificação de antecedentes reprovada"
 
-    # Faz a verificação da carteira de motorista
-    captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
-    elemento = driver.find_element(By.XPATH, "//h3[contains(text(), 'Carteira de habilitação')]")
-    elemento_pai = elemento.find_element(By.XPATH, "./ancestor::div[contains(@class, 'onboarding-task-header')]")
-    classes = elemento_pai.get_attribute("class")
-    # If para ver se está reprovada, aprovada, ou rejeitada
-    if "not-started" in classes:
-        status = "Anexo da CNH pendente"
-    elif "error" in classes:
-        status = "CNH reprovada"
-
     # Verifica se o motorista anexou a foto do crachá
     captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
     elemento = driver.find_element(By.XPATH, "//h3[contains(text(), 'Foto do crachá')]")
@@ -179,6 +168,17 @@ for link in nomes_links:
     # If para ver se está pendente o convite
     if "in-progress" in classes:
         status = "Aceite do convite pendente"
+
+    # Faz a verificação da carteira de motorista
+    captura_classe = driver.find_element(By.CSS_SELECTOR, ".af-column.margin-left.onboarding-task")
+    elemento = driver.find_element(By.XPATH, "//h3[contains(text(), 'Carteira de habilitação')]")
+    elemento_pai = elemento.find_element(By.XPATH, "./ancestor::div[contains(@class, 'onboarding-task-header')]")
+    classes = elemento_pai.get_attribute("class")
+    # If para ver se está reprovada, aprovada, ou rejeitada
+    if "not-started" in classes:
+        status = "Anexo da CNH pendente"
+    elif "error" in classes:
+        status = "CNH reprovada"
 
     # Abrir arquivo Excel e escrever dados
     wb = load_workbook(arquivo_excel)
