@@ -1,7 +1,11 @@
 import pandas as pd
 import os
 import time
+import smtplib
 
+
+from email.mime.text import MIMEText
+from email.mime.multipart import MIMEMultipart
 from selenium import webdriver
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.by import By
@@ -13,10 +17,10 @@ from datetime import datetime
 from selenium.common.exceptions import NoSuchElementException
 
 # Caminho para o pyinstaller
-caminho_base = os.path.dirname(os.path.abspath(__file__))
-driver_path = os.path.join(caminho_base, 'chromedriver.exe')
-service = Service(driver_path)
-driver = webdriver.Chrome(service=service)
+# caminho_base = os.path.dirname(os.path.abspath(__file__))
+# driver_path = os.path.join(caminho_base, 'chromedriver.exe')
+# service = Service(driver_path)
+# driver = webdriver.Chrome(service=service)
 
 # Montar nome do arquivo Excel
 agora = datetime.now()
@@ -80,12 +84,11 @@ driver.execute_script("arguments[0].click();", pesquisar)
 # Aguarda o carregamento da pesquisa
 time.sleep(3)
 
-nomes_links = driver.find_elements(By.XPATH, "//table[contains(@class, 'af-table')]//a[@class='af-link']")
+nomes_links_elements = driver.find_elements(By.XPATH, "//table[contains(@class, 'af-table')]//a[@class='af-link']")
+nomes_links = [el.get_attribute("href") for el in nomes_links_elements]
+
 # Loop para abrir cada link em uma nova aba
-for link in nomes_links:
-    nome = link.text
-    motorista = link.get_attribute("href")
-    
+for motorista in nomes_links:
     # Abrir em nova aba
     driver.execute_script("window.open(arguments[0]);", motorista)
     driver.switch_to.window(driver.window_handles[1])
@@ -94,6 +97,12 @@ for link in nomes_links:
     wait.until(EC.visibility_of_element_located((By.XPATH, "//div[contains(@class, 'af-row') and contains(@class, 'margin-left')]//h2[contains(@class, 'af-heading')]//b")))  
     elemento_nome = driver.find_element(By.XPATH, "//div[contains(@class, 'af-row') and contains(@class, 'margin-left')]//h2[contains(@class, 'af-heading')]//b")
     nome = elemento_nome.text.strip()
+
+    # Captura o email
+    wait = WebDriverWait(driver, 10)
+    elemento_label = wait.until(EC.visibility_of_element_located((By.XPATH, "//label[contains(text(), 'E-mail')]")))
+    email_span = elemento_label.find_element(By.XPATH, "./following-sibling::span")
+    email = email_span.text
 
     # Aguarda o carregamento da div onbording
     botao_onboarding = WebDriverWait(driver, 10).until(EC.presence_of_element_located((By.CSS_SELECTOR, "div.af-expander__heading")))
@@ -181,12 +190,32 @@ for link in nomes_links:
         status = "Aceite do convite pendente"
 
     # Abrir arquivo Excel e escrever dados
-    wb = load_workbook(arquivo_excel)
-    ws = wb.active
-    proxima_linha = ws.max_row + 1
-    ws.cell(row=proxima_linha, column=1).value = nome
-    ws.cell(row=proxima_linha, column=2).value = status
-    wb.save(arquivo_excel)
+    #wb = load_workbook(arquivo_excel)
+    #ws = wb.active
+    #proxima_linha = ws.max_row + 1
+    #ws.cell(row=proxima_linha, column=1).value = nome
+    #ws.cell(row=proxima_linha, column=2).value = status
+    #wb.save(arquivo_excel)
 
     driver.close()  # Fecha a aba atual
     driver.switch_to.window(driver.window_handles[0])  # Retorna para a aba principal
+
+mensagem = MIMEMultipart()
+mensagem['From'] = "fneto.log@gmail.com"
+mensagem['To'] = "arthurzacadev@gmail.com"
+mensagem['Subject'] = status
+
+# Corpo do e-mail
+corpo = 'Olá! Este é um e-mail enviado automaticamente com Python.'
+mensagem.attach(MIMEText(corpo, 'plain'))
+
+# Conectar ao servidor SMTP do Gmail e enviar
+try:
+    servidor = smtplib.SMTP('smtp.gmail.com', 587)
+    servidor.starttls()  # Inicia conexão segura
+    servidor.login("fneto.log@gmail.com", "SUCESSOn1e2t3o4!")
+    servidor.send_message(mensagem)
+    servidor.quit()
+    print('E-mail enviado com sucesso!')
+except Exception as e:
+    print(f'Erro ao enviar e-mail: {e}')
